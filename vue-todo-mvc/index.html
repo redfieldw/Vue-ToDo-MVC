@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoMVC</title>
+    <script src="vue.js"></script>
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+</head>
+
+<body>
+    <!-- 根节点 -->
+    <section id="todoapp">
+        <header>
+            <h1>ToDos</h1>
+            <input @keyup.enter="addTodo" v-model="newTodo" placeholder="input your tasks" />
+        </header>
+        <section>
+            <ul class="todo-list">
+                <li v-for="todo in todos" :class="{ completed: todo.completed }">
+                    <input type="checkbox" v-model="todo.completed" class="toggle" />
+                    <input type="text" v-model="todo.title" />
+                    <button @click="removeTodo(todo)" class="destroy"></button>
+                </li>
+            </ul>
+        </section>
+    </section>
+
+    <script>
+        let id = 0;
+
+        let app = new Vue({
+            el: "#todoapp",
+            data: {
+                todos: [{
+                    title: "task 1",
+                    id: id,
+                    completed: false
+                }],
+
+                newTodo: ''
+            },
+            methods: {
+                addTodo() {
+                    let value = this.newTodo;
+                    if (!value) {
+                        return;
+                    };
+                    this.todos.push({
+                        title: value,
+                        id: ++id,
+                        completed: false
+                    });
+                    this.newTodo = "";
+                },
+                removeTodo(todo) {
+                    this.todos.splice(this.todos.indexOf(todo), 1);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

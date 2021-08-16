@@ -1,0 +1,7 @@
+li {
+    list-style-type: none;
+}
+
+.completed input[type="text"] {
+    text-decoration: line-through;
+}

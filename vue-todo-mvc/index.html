@@ -47,6 +47,21 @@
 
 
     <script>
+        let STORAGE_KEY = "todos-vuejs-2.0";
+        let todoStorage = {
+            fetch() {
+                var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+                todos.forEach(function(todo, index) {
+                    todo.id = index;
+                });
+                todoStorage.uid = todos.length;
+                return todos;
+            },
+            save(todos) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+            }
+        }
+
         let filters = {
             all(todos) {
                 return todos;
@@ -68,30 +83,19 @@
         let app = new Vue({
             el: "#todoapp",
             data: {
-                todos: [{
-                    title: "task 1",
-                    id: id,
-                    completed: false
-                }, {
-                    title: "task 2",
-                    id: ++id,
-                    completed: false
-                }, {
-                    title: "task 3",
-                    id: ++id,
-                    completed: false
-                }, {
-                    title: "task 4",
-                    id: ++id,
-                    completed: false
-                }, {
-                    title: "task 5",
-                    id: ++id,
-                    completed: false
-                }],
+                todos: todoStorage.fetch(),
                 editedTodo: null,
                 newTodo: '',
                 visibility: "all"
+            },
+            watch: {
+                todos: {
+                    // 该回调会在任何被侦听的对象的 property 改变时被调用，不论其被嵌套多深
+                    handler(todos) {
+                        todoStorage.save(todos);
+                    },
+                    deep: true
+                }
             },
             computed: {
                 filteredTodos() {
@@ -120,8 +124,8 @@
                         return;
                     };
                     this.todos.push({
+                        id: todoStorage.uid++,
                         title: value,
-                        id: ++id,
                         completed: false
                     });
                     this.newTodo = "";

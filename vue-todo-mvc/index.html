@@ -15,20 +15,54 @@
     <section id="todoapp">
         <header>
             <h1>ToDos</h1>
+            <input type="checkbox" v-model="allDone" />
             <input @keyup.enter="addTodo" v-model="newTodo" placeholder="input your tasks" />
         </header>
         <section>
             <ul class="todo-list">
-                <li v-for="todo in todos" :class="{ completed: todo.completed }">
+                <li v-for="todo in filteredTodos" :class="{ completed: todo.completed,editing:todo == editedTodo }">
                     <input type="checkbox" v-model="todo.completed" class="toggle" />
-                    <input type="text" v-model="todo.title" />
+                    <label @dblclick="editTodo(todo)"> {{ todo.title }}</label>
                     <button @click="removeTodo(todo)" class="destroy"></button>
+
+                    <input class="edit" type="text" v-model="todo.title" v-todo-focus="todo == editedTodo" @blur="doneEdit(todo)" @keyup.enter="doneEdit(todo)" @keyup.esc="cancelEdit(todo)" />
                 </li>
             </ul>
         </section>
+        <footer> {{ remains }} {{ remains | pluralize }}<span> left</span>
+            <ul>
+                <li>
+                    <a href="#/all">All</a>
+                </li>
+                <li>
+                    <a href="#/active">Active</a>
+                </li>
+                <li>
+                    <a href="#/completed">Completed</a>
+                </li>
+            </ul>
+            <button @click="removeCompleted" v-show="todos.length > remains"></button>
+        </footer>
     </section>
 
+
     <script>
+        let filters = {
+            all(todos) {
+                return todos;
+            },
+            active(todos) {
+                return todos.filter(function(todo) {
+                    return !todo.completed;
+                });
+            },
+            completed(todos) {
+                return todos.filter(function(todo) {
+                    return todo.completed;
+                });
+            }
+        };
+
         let id = 0;
 
         let app = new Vue({
@@ -38,13 +72,50 @@
                     title: "task 1",
                     id: id,
                     completed: false
+                }, {
+                    title: "task 2",
+                    id: ++id,
+                    completed: false
+                }, {
+                    title: "task 3",
+                    id: ++id,
+                    completed: false
+                }, {
+                    title: "task 4",
+                    id: ++id,
+                    completed: false
+                }, {
+                    title: "task 5",
+                    id: ++id,
+                    completed: false
                 }],
+                editedTodo: null,
+                newTodo: '',
+                visibility: "all"
+            },
+            computed: {
+                filteredTodos() {
+                    return filters[this.visibility](this.todos)
+                },
+                remains() {
+                    return filters.active(this.todos).length;
+                },
+                allDone: {
+                    //接收了checkbox的值，在setter里，被勾选的话value就是true
+                    get: function() {
+                        return this.remaining === 0;
+                    },
+                    set: function(value) {
+                        this.todos.forEach(function(todo) {
+                            todo.completed = value;
+                        });
+                    }
+                }
 
-                newTodo: ''
             },
             methods: {
                 addTodo() {
-                    let value = this.newTodo;
+                    let value = this.newTodo && this.newTodo.trim();;
                     if (!value) {
                         return;
                     };
@@ -55,11 +126,60 @@
                     });
                     this.newTodo = "";
                 },
+                editTodo(todo) {
+                    this.beforeEditCache = todo.title; //退出编辑用
+                    this.editedTodo = todo;
+                },
+                doneEdit(todo) {
+                    if (!this.editedTodo) {
+                        return;
+                    };
+                    this.editedTodo = null;
+                    todo.title = todo.title.trim();
+                    if (!todo.title) {
+                        this.removeTodo(todo);
+                    }
+                },
+                cancelEdit: function(todo) {
+                    this.editedTodo = null;
+                    todo.title = this.beforeEditCache;
+                },
                 removeTodo(todo) {
                     this.todos.splice(this.todos.indexOf(todo), 1);
+                },
+
+                removeCompleted() {
+                    this.todos = filters.active(this.todos);
+                }
+            },
+            filters: {
+                pluralize(remains) {
+                    return remains === 1 ? "item" : "items";
+                }
+            },
+            directives: {
+                "todo-focus": function(el, binding) {
+                    if (binding.value) {
+                        el.focus();
+                    }
                 }
             }
         });
+
+        let onHashChange = function() {
+            let visibility = window.location.hash.replace(/#\//, "");
+
+            //如果筛选结果为空的话，就把筛选结果变为默认的all
+            if (filters[visibility]) {
+                app.visibility = visibility;
+            } else {
+                window.location.hash = "";
+                app.visibility = "all";
+            }
+        };
+
+        window.addEventListener("hashchange", onHashChange);
+        onHashChange();
     </script>
 </body>
 
